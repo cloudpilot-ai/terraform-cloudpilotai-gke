@@ -16,7 +16,7 @@ Terraform module for deploying [CloudPilot AI](https://cloudpilot.ai/) on Google
 - `gcloud` CLI configured for the target GKE cluster
 - `kubectl` available for cluster-side install flows
 - A CloudPilot AI API key
-- `cloudpilot-ai/cloudpilotai` provider with GKE resource support
+- `cloudpilot-ai/cloudpilotai` provider >= 0.5.0
 
 ## Usage
 

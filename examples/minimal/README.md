@@ -1,6 +1,6 @@
 # Minimal GKE Module Example
 
-This example uses the local `terraform-cloudpilotai-gke` module to install and manage CloudPilot on a real GKE cluster.
+This example uses the published `cloudpilot-ai/gke/cloudpilotai` module to install and manage CloudPilot on a real GKE cluster.
 
 It creates:
 
@@ -112,13 +112,11 @@ If you are using a local provider dev override, Terraform may print a warning ab
 terraform plan
 ```
 
-This example points the module `source` at the local checkout:
+This example points the module `source` at the published registry module:
 
 ```hcl
-source = "../../"
+source = "cloudpilot-ai/gke/cloudpilotai"
 ```
-
-So any local module changes in this repo are used directly.
 
 ## Step 7: Apply
 

@@ -128,10 +128,10 @@ What the script does:
 - leaves `project_id`, `cluster_uid`, `cluster_location`, and `kubeconfig` as optional commented follow-up inputs instead of forcing them for the initial import
 - relies on provider-side GKE auto-discovery for later kubeconfig generation when the cluster already exposes enough node networking metadata
 
-If you are testing the local checkout of this module instead of the published module, override the source explicitly:
+If you are testing a local checkout instead of the published module, override the source explicitly:
 
 ```bash
-python3 scripts/generated_to_module.py --input generated.tf --module-source ../..
+python3 scripts/generated_to_module.py --input generated.tf --module-source /path/to/terraform-cloudpilotai-gke
 ```
 
 ## Step 6: Switch the Example From Bootstrap Mode to Module Mode
