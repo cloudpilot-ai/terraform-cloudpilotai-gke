@@ -1,0 +1,4 @@
+cloudpilot_api_key      = "cp_..."
+cloudpilot_api_endpoint = "https://api.cloudpilot.ai"
+
+cluster_id       = "existing-cloudpilot-cluster-id"
