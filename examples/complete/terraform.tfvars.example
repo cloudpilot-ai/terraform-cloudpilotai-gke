@@ -1,0 +1,13 @@
+cloudpilotai_api_endpoint = "https://api.cloudpilot.ai"
+cloudpilotai_api_key      = "cp_..."
+
+cluster_name         = "my-gke-cluster"
+region               = "us-central1"
+restore_node_number  = 2
+skip_restore         = false
+
+# Optional only when local discovery is not enough:
+# project_id        = "my-gcp-project"
+# cluster_uid       = "kube-system-namespace-uid"
+# cluster_location  = "us-central1"
+# kubeconfig        = "/absolute/path/to/kubeconfig"
