@@ -24,7 +24,7 @@ output "cluster_uid" {
 }
 
 output "kubeconfig" {
-  description = "Path to the kubeconfig file used for accessing the GKE cluster."
+  description = "Explicitly configured GKE kubeconfig path, or null when the provider generates execution-local kubeconfigs."
   value       = cloudpilotai_gke_cluster.this.kubeconfig
 }
 

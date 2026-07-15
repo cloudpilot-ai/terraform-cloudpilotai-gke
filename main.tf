@@ -24,7 +24,10 @@ resource "cloudpilotai_workload_autoscaler" "this" {
   count = var.enable_workload_autoscaler ? 1 : 0
 
   cluster_id = cloudpilotai_gke_cluster.this.cluster_id
-  kubeconfig = cloudpilotai_gke_cluster.this.kubeconfig
+  kubeconfig = var.kubeconfig
+
+  gcp_project_id       = cloudpilotai_gke_cluster.this.project_id
+  gcp_cluster_location = var.cluster_location
 
   storage_class     = var.wa_storage_class
   enable_node_agent = var.wa_enable_node_agent

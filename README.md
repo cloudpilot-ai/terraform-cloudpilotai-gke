@@ -16,7 +16,7 @@ Terraform module for deploying [CloudPilot AI](https://cloudpilot.ai/) on Google
 - `gcloud` CLI configured for the target GKE cluster
 - `kubectl` available for cluster-side install flows
 - A CloudPilot AI API key
-- `cloudpilot-ai/cloudpilotai` provider >= 0.5.0
+- `cloudpilot-ai/cloudpilotai` provider >= 0.5.1
 
 ## Usage
 
@@ -96,3 +96,9 @@ kubectl get ns kube-system -o jsonpath='{.metadata.uid}'
 - `kubeconfig`
 - `node_autoscaler_enabled`
 - `workload_autoscaler_enabled`
+
+## Upgrading from provider-generated kubeconfig state
+
+Provider versions before 0.5.1 could store a generated path from the local Terraform or Terragrunt working directory. After upgrading the provider and this module, run a fresh plan instead of reusing an older saved plan. When `kubeconfig` is omitted, the plan removes the old path from state in place; no state edit, import, or resource replacement is required. The cluster and Workload Autoscaler resources generate their own kubeconfigs in each execution environment.
+
+Keep `enable_workload_autoscaler = true` for this upgrade apply before disabling it or destroying legacy Workload Autoscaler state. Terraform does not pass module configuration to the provider when deleting an old resource directly, so this apply records the discovered project/location access fields and removes the stale path first.
