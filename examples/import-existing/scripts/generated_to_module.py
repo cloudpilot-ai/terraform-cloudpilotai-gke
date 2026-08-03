@@ -13,6 +13,15 @@ RESOURCE_WITH_ID_RE = re.compile(
     re.MULTILINE,
 )
 TOP_LEVEL_ATTR_RE = re.compile(r"^  ([a-zA-Z0-9_]+)\s+=\s+(.*)$")
+WA_PROVIDER_ONLY_FIELDS = frozenset(
+    {
+        "aws_assume_role",
+        "aws_profile",
+        "gcp_cluster_location",
+        "gcp_project_id",
+        "kubeconfig",
+    }
+)
 
 
 def extract_resource_block(text: str, resource_type: str) -> str | None:
@@ -177,7 +186,7 @@ def build_module_file(
             "enable_initial_optimization_data_window_check": "wa_enable_initial_optimization_data_window_check",
         }
         for key, chunk in split_top_level_chunks(wa_body):
-            if key is None or key in ("cluster_id", "kubeconfig"):
+            if key is None or key == "cluster_id" or key in WA_PROVIDER_ONLY_FIELDS:
                 continue
             if key in key_map:
                 value = TOP_LEVEL_ATTR_RE.match(chunk.splitlines()[0]).group(2).strip()
@@ -194,11 +203,13 @@ def build_import_script(cluster_id: str, include_wa: bool) -> str:
         "#!/usr/bin/env bash\n",
         "set -euo pipefail\n",
         "\n",
-        f"terraform import 'module.cloudpilotai_gke.cloudpilotai_gke_cluster.this' '{cluster_id}'\n",
+        'terraform_cli="${TERRAFORM_CLI:-terraform}"\n',
+        "\n",
+        f'"$terraform_cli" import \'module.cloudpilotai_gke.cloudpilotai_gke_cluster.this\' \'{cluster_id}\'\n',
     ]
     if include_wa:
         lines.append(
-            f"terraform import 'module.cloudpilotai_gke.cloudpilotai_workload_autoscaler.this[0]' '{cluster_id}'\n"
+            f'"$terraform_cli" import \'module.cloudpilotai_gke.cloudpilotai_workload_autoscaler.this[0]\' \'{cluster_id}\'\n'
         )
     return "".join(lines)
 
