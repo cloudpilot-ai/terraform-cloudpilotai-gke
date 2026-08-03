@@ -28,6 +28,10 @@ class GeneratedToModuleTest(unittest.TestCase):
         wa_body = """
   cluster_id = "cluster-1"
   kubeconfig = "/tmp/kubeconfig"
+  aws_assume_role = null
+  aws_profile = null
+  gcp_cluster_location = null
+  gcp_project_id = null
   storage_class = "standard-rwo"
   enable_node_agent = true
   recommendation_policies = []
@@ -50,10 +54,20 @@ class GeneratedToModuleTest(unittest.TestCase):
         self.assertIn("nodeclasses = []", out)
         self.assertIn("enable_workload_autoscaler = true", out)
         self.assertIn("wa_storage_class = \"standard-rwo\"", out)
+        for provider_only_field in (
+            "aws_assume_role",
+            "aws_profile",
+            "gcp_cluster_location",
+            "gcp_project_id",
+            "kubeconfig",
+        ):
+            self.assertNotRegex(out, rf"(?m)^  {provider_only_field}\s*=")
 
     def test_build_import_script_omits_optional_resources_when_absent(self) -> None:
         out = generated_to_module.build_import_script("cluster-1", False)
         self.assertIn("cloudpilotai_gke_cluster.this", out)
+        self.assertIn('terraform_cli="${TERRAFORM_CLI:-terraform}"', out)
+        self.assertIn('"$terraform_cli" import', out)
         self.assertNotIn("cloudpilotai_gke_node_autoscaler", out)
         self.assertNotIn("cloudpilotai_workload_autoscaler", out)
 

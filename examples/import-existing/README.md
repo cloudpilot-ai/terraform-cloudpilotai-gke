@@ -170,6 +170,12 @@ Run the helper script generated in Step 5:
 ./import-module.sh
 ```
 
+The helper defaults to the `terraform` CLI. To run the same import with OpenTofu, set:
+
+```bash
+TERRAFORM_CLI=tofu ./import-module.sh
+```
+
 It imports into:
 
 - `module.cloudpilotai_gke.cloudpilotai_gke_cluster.this`
