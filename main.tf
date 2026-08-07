@@ -15,9 +15,10 @@ resource "cloudpilotai_gke_cluster" "this" {
   restore_node_number        = local.effective_restore_desired_size
   restore_desired_sizes      = local.effective_restore_desired_sizes
 
-  cluster_setting = var.cluster_setting
-  nodeclasses     = local.rendered_nodeclasses
-  nodepools       = local.rendered_nodepools
+  cluster_setting      = var.cluster_setting
+  scheduled_rebalances = var.scheduled_rebalances
+  nodeclasses          = local.rendered_nodeclasses
+  nodepools            = local.rendered_nodepools
 }
 
 resource "cloudpilotai_workload_autoscaler" "this" {

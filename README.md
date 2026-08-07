@@ -5,10 +5,12 @@ Terraform module for deploying [CloudPilot AI](https://cloudpilot.ai/) on Google
 ## Features
 
 - Register a GKE cluster with CloudPilot AI and manage cluster-level settings
+- Manage scheduled rebalance policies without taking over policies when the input is null
 - Install and manage the GKE node autoscaler directly through the cluster resource
 - Reuse `nodeclass_templates` and `nodepool_templates` at the module layer, following the same pattern as the EKS module
 - Optionally deploy the shared Workload Autoscaler with recommendation and autoscaling policies
 - Reuse the provider's typed `GCENodeClass` and `GCENodePool` inputs directly
+- Configure Local SSD ephemeral storage and JVM minimum heap Xms through the shared provider inputs
 
 ## Requirements
 
@@ -16,7 +18,7 @@ Terraform module for deploying [CloudPilot AI](https://cloudpilot.ai/) on Google
 - `gcloud` CLI configured for the target GKE cluster
 - `kubectl` available for cluster-side install flows
 - A CloudPilot AI API key
-- `cloudpilot-ai/cloudpilotai` provider >= 0.5.1
+- `cloudpilot-ai/cloudpilotai` provider >= 0.6.0
 
 ## Usage
 

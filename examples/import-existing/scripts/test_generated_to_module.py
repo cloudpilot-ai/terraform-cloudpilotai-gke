@@ -22,6 +22,12 @@ class GeneratedToModuleTest(unittest.TestCase):
   }
   disable_workload_uploading = false
   enable_upgrade = true
+  scheduled_rebalances = [
+    {
+      name = "nightly"
+      cron = "0 3 * * *"
+    }
+  ]
   nodeclasses = []
   nodepools = []
 """
@@ -51,6 +57,8 @@ class GeneratedToModuleTest(unittest.TestCase):
         self.assertIn('post_run_command = ""', out)
         self.assertIn("only_install_agent = null", out)
         self.assertIn("enable_rebalance = true", out)
+        self.assertIn("scheduled_rebalances = [", out)
+        self.assertIn('name = "nightly"', out)
         self.assertIn("nodeclasses = []", out)
         self.assertIn("enable_workload_autoscaler = true", out)
         self.assertIn("wa_storage_class = \"standard-rwo\"", out)

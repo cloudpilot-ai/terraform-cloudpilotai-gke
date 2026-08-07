@@ -70,6 +70,8 @@ variable "cluster_setting" {
     /api/v1/clusters/{cluster_id}/setting. Supported fields:
     - enable_node_repair
     - enable_disk_monitor
+    - enable_node_pool_decommission
+    - enable_workload_min_non_spot
     - discount
     - pre_run_command
     - post_run_command
@@ -135,7 +137,8 @@ variable "nodeclasses" {
     List of GCE NodeClass objects managed by the GKE cluster resource.
     Each object supports the typed fields exposed by the provider, including:
     - name (Required)
-    - template_name, enable_image_accelerator, service_account, disks, image_selector_terms, subnet_range_name,
+    - template_name, enable_image_accelerator, enable_local_ssd_ephemeral_storage,
+      ephemeral_storage_local_ssd, service_account, disks, image_selector_terms, subnet_range_name,
       kubelet_configuration, labels, metadata, network_tags,
       confidential_instance_type, network_config, auto_gpu_taint,
       gpu_driver_version, origin_nodeclass_json (all Optional)
@@ -148,7 +151,8 @@ variable "nodeclass_templates" {
   description = <<-EOT
     List of GKE NodeClass template objects for reuse across nodeclasses. Each object supports:
     - template_name (Required) - Template identifier
-    - enable_image_accelerator, service_account, disks, image_selector_terms, subnet_range_name,
+    - enable_image_accelerator, enable_local_ssd_ephemeral_storage,
+      ephemeral_storage_local_ssd, service_account, disks, image_selector_terms, subnet_range_name,
       kubelet_configuration, labels, metadata, network_tags,
       confidential_instance_type, network_config, auto_gpu_taint,
       gpu_driver_version, origin_nodeclass_json (all Optional)
@@ -165,8 +169,11 @@ variable "nodepools" {
     - template_name, enable, enable_image_accelerator, nodeclass, enable_gpu, provision_priority,
       instance_family, instance_arch, capacity_type, zone,
       instance_cpu_min, instance_cpu_max, instance_memory_min,
-      instance_memory_max, labels, taints, node_disruption_limit,
+      instance_memory_max, labels, taints, node_disruption_limit, node_disruption_budgets,
       node_disruption_delay, origin_nodepool_json (all Optional)
+    - node_disruption_budgets supports a list of objects with nodes (Required),
+      reasons, schedule, and duration (Optional). schedule and duration must be set together.
+    - node_disruption_limit is deprecated; use node_disruption_budgets instead.
   EOT
   type        = any
   default     = []
@@ -179,8 +186,11 @@ variable "nodepool_templates" {
     - enable, enable_image_accelerator, nodeclass, enable_gpu, provision_priority,
       instance_family, instance_arch, capacity_type, zone,
       instance_cpu_min, instance_cpu_max, instance_memory_min,
-      instance_memory_max, labels, taints, node_disruption_limit,
+      instance_memory_max, labels, taints, node_disruption_limit, node_disruption_budgets,
       node_disruption_delay, origin_nodepool_json (all Optional)
+    - node_disruption_budgets supports a list of objects with nodes (Required),
+      reasons, schedule, and duration (Optional). schedule and duration must be set together.
+    - node_disruption_limit is deprecated; use node_disruption_budgets instead.
   EOT
   type        = any
   default     = []
@@ -261,11 +271,21 @@ variable "recommendation_policies" {
     - history_window_cpu, history_window_memory, evaluation_period (Required)
     - strategy_type, percentile_cpu, percentile_memory, buffer_cpu, buffer_memory,
       request_min_cpu, request_min_memory, request_max_cpu, request_max_memory,
-      jvm_heap_buffer, jvm_min_heap_xms_ratio_of_memory,
+      jvm_heap_buffer, jvm_min_heap_xms, jvm_min_heap_xms_ratio_of_memory,
       jvm_recent_non_heap_window, jvm_heap_used_percentile (all Optional)
   EOT
   type        = any
   default     = []
+}
+
+################################################################################
+# Scheduled Rebalance
+################################################################################
+
+variable "scheduled_rebalances" {
+  description = "Scheduled rebalance policies. When null, Terraform leaves all server policies unmanaged; an empty list removes only policies previously managed by this module."
+  type        = any
+  default     = null
 }
 
 ################################################################################

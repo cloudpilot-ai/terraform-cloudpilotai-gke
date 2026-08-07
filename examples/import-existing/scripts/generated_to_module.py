@@ -147,6 +147,7 @@ def build_module_file(
         "restore_node_number",
         "restore_desired_sizes",
         "cluster_setting",
+        "scheduled_rebalances",
         "nodeclasses",
         "nodepools",
     ):
