@@ -76,6 +76,18 @@ The module always creates `cloudpilotai_gke_cluster`. Set `only_install_agent = 
 
 Template support is intentionally implemented only in this module layer. The provider itself accepts final `nodeclasses` and `nodepools`, while the module adds `nodeclass_templates`, `nodepool_templates`, and `template_name` merge behavior so GKE stays aligned with the EKS module pattern.
 
+To size manually attached Local SSDs from aggregate Pod ephemeral-storage requests, enable Local SSD ephemeral storage and set `auto_count`. This input is not supported by provider v0.6.0; use a provider release that includes [terraform-provider-cloudpilotai#38](https://github.com/cloudpilot-ai/terraform-provider-cloudpilotai/pull/38):
+
+```hcl
+nodeclasses = [{
+  name                               = "cloudpilot"
+  enable_local_ssd_ephemeral_storage = true
+  ephemeral_storage_local_ssd = {
+    auto_count = true
+  }
+}]
+```
+
 For destroy behavior, the GKE cluster resource now follows the same high-level pattern as the EKS provider path: it does not enter an interactive restore flow by default. If you want Terraform destroy to restore regular GKE node pools before removing the CloudPilot components, set either `restore_node_number` for a uniform size or `restore_desired_sizes` for per-pool overrides. Set `skip_restore = true` to use the same top-level switch as the EKS module. The older `node_autoscaler_*` restore inputs remain available as compatibility aliases.
 
 If the cluster is already registered with CloudPilot AI, you can also pass an existing `cluster_id` to keep the module aligned with the current CloudPilot identity during import/migration flows. In that path, `project_id` and `cluster_uid` can usually stay unset at first; the provider will try to auto-discover the missing GKE access metadata for import-driven kubeconfig generation as long as your local `gcloud` access is already valid.
