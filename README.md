@@ -10,7 +10,9 @@ Terraform module for deploying [CloudPilot AI](https://cloudpilot.ai/) on Google
 - Reuse `nodeclass_templates` and `nodepool_templates` at the module layer, following the same pattern as the EKS module
 - Optionally deploy the shared Workload Autoscaler with recommendation and autoscaling policies
 - Reuse the provider's typed `GCENodeClass` and `GCENodePool` inputs directly
-- Configure Local SSD ephemeral storage and JVM minimum heap Xms through the shared provider inputs
+- Configure automatic Local SSD counts, dynamic boot disk sizing, disruption cooldowns, and Job NodePool optimization
+- Manage per-workload rebalancing, Spot placement, and minimum non-Spot replicas
+- Configure JVM Xms and Xmx heap bounds through the shared Workload Autoscaler inputs
 
 ## Requirements
 
@@ -18,7 +20,29 @@ Terraform module for deploying [CloudPilot AI](https://cloudpilot.ai/) on Google
 - `gcloud` CLI configured for the target GKE cluster
 - `kubectl` available for cluster-side install flows
 - A CloudPilot AI API key
-- `cloudpilot-ai/cloudpilotai` provider >= 0.6.0
+- `cloudpilot-ai/cloudpilotai` provider >= 0.7.0 (planned release)
+
+## Server v1.36.4 Provider Compatibility
+
+This module targets the configuration supported by server v1.36.4 and the provider changes in [PR #44](https://github.com/cloudpilot-ai/terraform-provider-cloudpilotai/pull/44). This prepares module v0.3.0 for provider v0.7.0. Both versions are pending release; use this local module checkout and a provider build containing that PR for prerelease testing. The new `workloads` resource argument requires that provider build even when the module input is null.
+
+| Module input | Supported settings |
+| --- | --- |
+| `cluster_setting` | `disruption_cooldown` plus the existing cluster settings |
+| `nodeclasses`, `nodeclass_templates` | `ephemeral_storage_local_ssd.auto_count` or `count`; boot `disks[].size_policy` with `per_vcpu_gib` and `max_size_gib` |
+| `nodepools`, `nodepool_templates` | `disruption_cooldown`; `job_nodepool_optimization.min_active_nodes` and `provisioning_delay` |
+| `workloads` | `name`, `type`, `namespace`, `rebalance_able`, `spot_friendly`, `min_non_spot_replicas` |
+| `recommendation_policies` | `jvm_min_heap_xms`, `jvm_max_heap_xms`, `jvm_min_heap_xmx`, `jvm_max_heap_xmx` plus the existing recommendation fields |
+| `autoscaling_policies` | `startup_boost_recommendation_policy_name` for an independent startup policy; `startup_boost_update_resources` for CPU and/or memory |
+| `enable_proactive`, `disable_proactive` | `startup_boost_enabled` filters alongside the existing workload filters |
+
+Maintenance mode, Saving Report baseline fields, `memory_request_multiplier`, and `zero_memory_request_mib` are outside this module's server v1.36.4 configuration contract.
+
+Set an optional passthrough input to `null` to leave its server value unmanaged. Existing public input defaults remain unchanged, so pass `null` explicitly when a default would otherwise manage a setting. Explicit null values on a NodeClass or NodePool override values from its module template; omitted keys still inherit from the template. In a non-empty policy, null child fields preserve their server values. `false` and zero remain explicit values where valid.
+
+Explicit empty values request a reset: `job_nodepool_optimization = {}` removes the Job policy, `disks[].size_policy = {}` removes dynamic disk sizing, and `ephemeral_storage_local_ssd = {}` clears its explicit sizing mode. An object whose optional children are all null is treated as an empty object. A pool's `disruption_cooldown = ""` removes its override; `"0s"` explicitly disables the extra delay. A new non-empty disk policy needs a valid `max_size_gib`. Required fields and values rejected by the server cannot be cleared with an invalid empty value.
+
+For `nodeclasses`, `nodepools`, recommendation policies, and autoscaling policies, `[]` removes only objects previously managed by the provider. For `workloads`, `[]` stops managing workloads without resetting previously applied settings. Proactive filters are operations rather than persistent policy lists.
 
 ## Usage
 

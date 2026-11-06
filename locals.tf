@@ -1,14 +1,14 @@
 locals {
-  nodeclass_templates = var.nodeclass_templates == null ? [] : var.nodeclass_templates
+  nodeclass_templates = try([for template in var.nodeclass_templates : template], [])
   nodeclasses         = var.nodeclasses == null ? null : var.nodeclasses
-  nodepool_templates  = var.nodepool_templates == null ? [] : var.nodepool_templates
+  nodepool_templates  = try([for template in var.nodepool_templates : template], [])
   nodepools           = var.nodepools == null ? null : var.nodepools
 
   nodeclass_template_map = {
     for template in local.nodeclass_templates :
     try(template.template_name != null ? template.template_name : "", "") => {
       for key, value in template : key => value
-      if key != "template_name" && value != null
+      if key != "template_name"
     }
     if try(template.template_name != null ? template.template_name : "", "") != ""
   }
@@ -18,7 +18,7 @@ locals {
       lookup(local.nodeclass_template_map, try(nodeclass.template_name != null ? nodeclass.template_name : "", ""), {}),
       {
         for key, value in nodeclass : key => value
-        if key != "template_name" && value != null
+        if key != "template_name"
       }
     )
   ]
@@ -27,7 +27,7 @@ locals {
     for template in local.nodepool_templates :
     try(template.template_name != null ? template.template_name : "", "") => {
       for key, value in template : key => value
-      if key != "template_name" && value != null
+      if key != "template_name"
     }
     if try(template.template_name != null ? template.template_name : "", "") != ""
   }
@@ -37,7 +37,7 @@ locals {
       lookup(local.nodepool_template_map, try(nodepool.template_name != null ? nodepool.template_name : "", ""), {}),
       {
         for key, value in nodepool : key => value
-        if key != "template_name" && value != null
+        if key != "template_name"
       }
     )
   ]

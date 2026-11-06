@@ -17,6 +17,7 @@ resource "cloudpilotai_gke_cluster" "this" {
 
   cluster_setting      = var.cluster_setting
   scheduled_rebalances = var.scheduled_rebalances
+  workloads            = var.workloads
   nodeclasses          = local.rendered_nodeclasses
   nodepools            = local.rendered_nodepools
 }
