@@ -54,7 +54,7 @@ class GeneratedToModuleTest(unittest.TestCase):
         self.assertIn('cluster_name = "demo-gke"', out)
         self.assertIn('region = "us-central1"', out)
         self.assertIn('# project_id = "my-gcp-project"', out)
-        self.assertIn('post_run_command = ""', out)
+        self.assertIn("post_run_command = null", out)
         self.assertIn("only_install_agent = null", out)
         self.assertIn("enable_rebalance = true", out)
         self.assertIn("scheduled_rebalances = [", out)
@@ -78,6 +78,92 @@ class GeneratedToModuleTest(unittest.TestCase):
         self.assertIn('"$terraform_cli" import', out)
         self.assertNotIn("cloudpilotai_gke_node_autoscaler", out)
         self.assertNotIn("cloudpilotai_workload_autoscaler", out)
+
+    def test_released_fields_and_null_values_survive_conversion(self) -> None:
+        cluster_body = """
+  cluster_name = "example-gke"
+  region = "us-central1"
+  cluster_setting = {
+    disruption_cooldown = "5m"
+    enable_node_repair = false
+    pre_run_command = null
+    post_run_command = null
+    maintenance_enabled = true
+    saving_report_baseline_start_at = "2026-01-01T00:00:00Z"
+    saving_report_baseline_end_at = "2026-01-02T00:00:00Z"
+  }
+  workloads = [{
+    name = "example-api"
+    type = "deployment"
+    namespace = "default"
+    rebalance_able = false
+    spot_friendly = null
+    min_non_spot_replicas = 0
+  }]
+  nodeclasses = [{
+    name = "example-class"
+    ephemeral_storage_local_ssd = { auto_count = true, count = null }
+    disks = [{ boot = true, size_gib = 80, size_policy = { per_vcpu_gib = 0, max_size_gib = 512 } }]
+  }]
+  nodepools = [{
+    name = "example-pool"
+    disruption_cooldown = "0s"
+    job_nodepool_optimization = { min_active_nodes = null, provisioning_delay = "30s" }
+  }]
+"""
+        wa_body = """
+  storage_class = null
+  enable_node_agent = null
+  recommendation_policies = [{
+    name = "example-policy"
+    jvm_max_heap_xms = null
+    jvm_min_heap_xmx = "256Mi"
+    jvm_max_heap_xmx = "4Gi"
+  }]
+"""
+        out = generated_to_module.build_module_file(cluster_body, wa_body, "../..")
+        for expected in (
+            'disruption_cooldown = "5m"',
+            "enable_node_repair = false",
+            "pre_run_command = null",
+            "post_run_command = null",
+            "workloads = [{",
+            "rebalance_able = false",
+            "spot_friendly = null",
+            "min_non_spot_replicas = 0",
+            "auto_count = true, count = null",
+            "per_vcpu_gib = 0, max_size_gib = 512",
+            "min_active_nodes = null",
+            "wa_storage_class = null",
+            "wa_enable_node_agent = null",
+            "jvm_max_heap_xms = null",
+            'jvm_min_heap_xmx = "256Mi"',
+            'jvm_max_heap_xmx = "4Gi"',
+        ):
+            self.assertIn(expected, out)
+        for excluded in (
+            "maintenance_enabled",
+            "saving_report_baseline_start_at",
+            "saving_report_baseline_end_at",
+        ):
+            self.assertNotIn(excluded, out)
+
+    def test_null_workloads_remain_unmanaged(self) -> None:
+        out = generated_to_module.build_module_file("  workloads = null\n", None, "../..")
+        self.assertIn("workloads = null", out)
+
+    def test_unreleased_memory_settings_are_excluded(self) -> None:
+        cluster_body = """
+  cluster_setting = {
+    memory_request_multiplier = 1.5
+    zero_memory_request_mib = 128
+    discount = 0
+  }
+"""
+        out = generated_to_module.build_module_file(cluster_body, None, "../..")
+        self.assertNotIn("memory_request_multiplier", out)
+        self.assertNotIn("zero_memory_request_mib", out)
+        self.assertIn("discount = 0", out)
 
     def test_main_writes_expected_files(self) -> None:
         generated_tf = """

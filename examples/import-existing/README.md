@@ -110,7 +110,9 @@ By default it writes:
 What the script does:
 
 - converts the discovered provider resource config into `module "cloudpilotai_gke" { source = "cloudpilot-ai/gke/cloudpilotai" ... }`
-- preserves `cloudpilotai_gke_cluster.cluster_setting`
+- preserves supported `cloudpilotai_gke_cluster.cluster_setting` fields and their null values
+- excludes maintenance mode, Saving Report baseline fields, and unreleased memory-request settings
+- preserves `workloads`, dynamic disk policies, automatic Local SSD counts, disruption cooldowns, Job NodePool optimization, and JVM heap bounds
 - keeps the GKE node autoscaler settings on the same cluster module call, including:
   - `only_install_agent`
   - `enable_rebalance`
@@ -119,6 +121,7 @@ What the script does:
   - `restore_desired_sizes`
   - `nodeclasses`
   - `nodepools`
+  - `workloads`
 - leaves `nodeclass_templates` and `nodepool_templates` available for later manual refactoring if you want to deduplicate the generated `nodeclasses` / `nodepools` after the import is stable
 - maps Workload Autoscaler settings into module inputs like:
   - `wa_storage_class`
@@ -127,6 +130,8 @@ What the script does:
 - preserves the discovered `cluster_name` and `region` directly from `generated.tf`
 - leaves `project_id`, `cluster_uid`, `cluster_location`, and `kubeconfig` as optional commented follow-up inputs instead of forcing them for the initial import
 - relies on provider-side GKE auto-discovery for later kubeconfig generation when the cluster already exposes enough node networking metadata
+
+Module v0.3.0 and provider v0.7.0 are pending release. Before release, use `--module-source /path/to/terraform-cloudpilotai-gke` and a local provider build. The added settings require the unreleased provider changes in [PR #44](https://github.com/cloudpilot-ai/terraform-provider-cloudpilotai/pull/44), targeting server v1.36.4. The converter preserves explicit null values instead of changing null commands to empty strings. When refactoring imported objects into module templates, explicit null values on an object override template values and remain unmanaged by the provider.
 
 If you are testing a local checkout instead of the published module, override the source explicitly:
 

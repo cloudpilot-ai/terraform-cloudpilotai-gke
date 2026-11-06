@@ -11,12 +11,17 @@ It is intended for real-cluster validation, including destroy with restore back 
 
 - installs `cloudpilotai_gke_cluster`
 - installs `cloudpilotai_workload_autoscaler`
+- configures dynamic boot disk sizing and automatic Local SSD counts on an `n2` NodePool
+- configures cluster and NodePool disruption cooldowns and Job NodePool optimization
+- shows workload node-optimization settings and JVM Xms/Xmx bounds
 - creates one recommendation policy and one disabled autoscaling policy for Workload Autoscaler CRUD validation
 - configures one GKE nodepool template with a custom node label:
 
   - `workload=cloudpilot-managed`
 
 - includes [trigger-managed-node.yaml](trigger-managed-node.yaml), a helper manifest that can be applied after Terraform install to force CloudPilot to provision at least one managed node
+
+Module v0.3.0 and provider v0.7.0 are pending release. Use a local module source and provider build for prerelease validation. The added fields target server v1.36.4 and require the unreleased provider changes in [PR #44](https://github.com/cloudpilot-ai/terraform-provider-cloudpilotai/pull/44). Replace the illustrative `example-api` workload target with an existing workload before applying. Optional null fields remain unmanaged; `false` and zero are explicit values.
 
 ## Inputs
 

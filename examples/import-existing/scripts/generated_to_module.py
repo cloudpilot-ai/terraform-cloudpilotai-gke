@@ -83,9 +83,10 @@ def has_top_level_key(body: str, key: str) -> bool:
 
 
 def transform_cluster_setting_chunk(chunk: str) -> str:
+    # These fields are outside the server v1.36.4 module contract.
     return re.sub(
-        r"^(\s+(?:pre_run_command|post_run_command)\s+=\s+)null$",
-        r'\1""',
+        r"^[ \t]+(?:maintenance_enabled|saving_report_baseline_start_at|saving_report_baseline_end_at|memory_request_multiplier|zero_memory_request_mib)\s+=[^\n]*(?:\n|$)",
+        "",
         chunk,
         flags=re.MULTILINE,
     )
@@ -148,6 +149,7 @@ def build_module_file(
         "restore_desired_sizes",
         "cluster_setting",
         "scheduled_rebalances",
+        "workloads",
         "nodeclasses",
         "nodepools",
     ):

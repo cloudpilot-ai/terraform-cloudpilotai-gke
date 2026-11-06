@@ -2,6 +2,8 @@
 
 This example uses the published `cloudpilot-ai/gke/cloudpilotai` module to install and manage CloudPilot on a real GKE cluster.
 
+Module v0.3.0 requires provider v0.7.0 or later. These versions are pending release; prerelease testing requires a local module source and provider build instead of the published registry versions.
+
 It creates:
 
 - `cloudpilotai_gke_cluster`

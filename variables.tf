@@ -68,6 +68,7 @@ variable "cluster_setting" {
   description = <<-EOT
     Optional cluster-level setting object. When null, this module does not manage
     /api/v1/clusters/{cluster_id}/setting. Supported fields:
+    - disruption_cooldown
     - enable_node_repair
     - enable_disk_monitor
     - enable_node_pool_decommission
@@ -142,6 +143,9 @@ variable "nodeclasses" {
       kubelet_configuration, labels, metadata, network_tags,
       confidential_instance_type, network_config, auto_gpu_taint,
       gpu_driver_version, origin_nodeclass_json (all Optional)
+    - ephemeral_storage_local_ssd supports auto_count or count (mutually exclusive).
+    - disks supports size_policy with per_vcpu_gib and max_size_gib for one boot disk.
+      max_size_gib is required for a new managed policy; null preserves an existing value.
   EOT
   type        = any
   default     = []
@@ -156,6 +160,9 @@ variable "nodeclass_templates" {
       kubelet_configuration, labels, metadata, network_tags,
       confidential_instance_type, network_config, auto_gpu_taint,
       gpu_driver_version, origin_nodeclass_json (all Optional)
+    - ephemeral_storage_local_ssd supports auto_count or count (mutually exclusive).
+    - disks supports size_policy with per_vcpu_gib and max_size_gib for one boot disk.
+      max_size_gib is required for a new managed policy; null preserves an existing value.
   EOT
   type        = any
   default     = []
@@ -170,7 +177,10 @@ variable "nodepools" {
       instance_family, instance_arch, capacity_type, zone,
       instance_cpu_min, instance_cpu_max, instance_memory_min,
       instance_memory_max, labels, taints, node_disruption_limit, node_disruption_budgets,
-      node_disruption_delay, origin_nodepool_json (all Optional)
+      node_disruption_delay, disruption_cooldown, job_nodepool_optimization,
+      origin_nodepool_json (all Optional)
+    - job_nodepool_optimization supports min_active_nodes and provisioning_delay.
+      Null preserves the existing policy; an empty object clears it. In a non-empty object, null children preserve server values.
     - node_disruption_budgets supports a list of objects with nodes (Required),
       reasons, schedule, and duration (Optional). schedule and duration must be set together.
     - node_disruption_limit is deprecated; use node_disruption_budgets instead.
@@ -187,13 +197,32 @@ variable "nodepool_templates" {
       instance_family, instance_arch, capacity_type, zone,
       instance_cpu_min, instance_cpu_max, instance_memory_min,
       instance_memory_max, labels, taints, node_disruption_limit, node_disruption_budgets,
-      node_disruption_delay, origin_nodepool_json (all Optional)
+      node_disruption_delay, disruption_cooldown, job_nodepool_optimization,
+      origin_nodepool_json (all Optional)
+    - job_nodepool_optimization supports min_active_nodes and provisioning_delay.
+      Null preserves the existing policy; an empty object clears it. In a non-empty object, null children preserve server values.
     - node_disruption_budgets supports a list of objects with nodes (Required),
       reasons, schedule, and duration (Optional). schedule and duration must be set together.
     - node_disruption_limit is deprecated; use node_disruption_budgets instead.
   EOT
   type        = any
   default     = []
+}
+
+################################################################################
+# Workload Node Optimization
+################################################################################
+
+variable "workloads" {
+  description = <<-EOT
+    Optional workload node-optimization settings. Each object requires name, type,
+    and namespace; rebalance_able, spot_friendly, and min_non_spot_replicas are
+    optional. Use lowercase types such as deployment or statefulset. Null leaves
+    workloads unmanaged; an empty list stops managing them without resetting
+    previously applied server settings. Null child fields preserve server values.
+  EOT
+  type        = any
+  default     = null
 }
 
 ################################################################################
@@ -271,7 +300,8 @@ variable "recommendation_policies" {
     - history_window_cpu, history_window_memory, evaluation_period (Required)
     - strategy_type, percentile_cpu, percentile_memory, buffer_cpu, buffer_memory,
       request_min_cpu, request_min_memory, request_max_cpu, request_max_memory,
-      jvm_heap_buffer, jvm_min_heap_xms, jvm_min_heap_xms_ratio_of_memory,
+      jvm_heap_buffer, jvm_min_heap_xms, jvm_max_heap_xms,
+      jvm_min_heap_xmx, jvm_max_heap_xmx, jvm_min_heap_xms_ratio_of_memory,
       jvm_recent_non_heap_window, jvm_heap_used_percentile (all Optional)
   EOT
   type        = any
@@ -299,7 +329,8 @@ variable "autoscaling_policies" {
     - recommendation_policy_name (Required)
     - enable, priority, target_refs, update_schedules, limit_policies,
       update_resources, drift_threshold_cpu, drift_threshold_memory,
-      on_policy_removal, startup_boost_enabled, startup_boost_min_boost_duration,
+      on_policy_removal, startup_boost_enabled, startup_boost_recommendation_policy_name,
+      startup_boost_update_resources, startup_boost_min_boost_duration,
       startup_boost_min_ready_duration, startup_boost_multiplier_cpu,
       startup_boost_multiplier_memory, disable_runtime_optimization,
       target_refs.label_selector, in_place_fallback_default_policy,
@@ -318,7 +349,7 @@ variable "enable_proactive" {
     List of workload filter objects to enable proactive optimization. Each object supports:
     - namespaces, workload_kinds, workload_name, workload_state,
       autoscaling_policy_names, optimization_states, disable_proactive_update,
-      recommendation_policy_names, runtime_languages, optimized (all Optional)
+      recommendation_policy_names, runtime_languages, optimized, startup_boost_enabled (all Optional)
   EOT
   type        = any
   default     = []
@@ -329,7 +360,7 @@ variable "disable_proactive" {
     List of workload filter objects to disable proactive optimization. Each object supports:
     - namespaces, workload_kinds, workload_name, workload_state,
       autoscaling_policy_names, optimization_states, disable_proactive_update,
-      recommendation_policy_names, runtime_languages, optimized (all Optional)
+      recommendation_policy_names, runtime_languages, optimized, startup_boost_enabled (all Optional)
   EOT
   type        = any
   default     = []
